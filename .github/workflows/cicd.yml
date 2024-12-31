@@ -1,0 +1,55 @@
+name: CI/CD Pipeline
+
+on:
+  # Manually trigger workflow runs
+  workflow_dispatch:
+  # Automatically triggers the workflow on push from the deploy branch
+  push:
+    branches: ["deploy"]
+
+# Creating Jobs for our CI/CD pipeline by following two jobs
+jobs:
+  # 1. Build job to build a docker image and push into the docker hub repository
+  build:
+    # Run on Ubuntu using the latest version
+    runs-on: [ubuntu-latest]
+    # Job's steps
+    steps:
+      # Check-out "deploy" repository under $GITHUB_WORKSPACE, so our workflow can access it
+      - name: Checkout source
+        uses: actions/checkout@v3
+      # Set-up Java SDK 21 using "Temurin" distro
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      # Build project using pre-installed/cached Maven
+      - name: Build project
+        run: mvn clean install -DskipTests
+      # Login to Docker hub
+      - name: Login to Docker hub
+        uses: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+      # Build docker image from the existing project (using maven)
+      - name: Build Docker Image
+        run: docker build -t shobhittripathi/dataservice-0.0.1-SNAPSHOT .
+      # Publish the build image to our docker hub repository
+      - name: Publish image to docker hub
+        run: docker push shobhittripathi/dataservice-0.0.1-SNAPSHOT:latest
+
+  # 2. Deploy the above build docker image by pulling from the docker hub repo into the AWS EC2 instance (using - runner which is self-hosted)
+  deploy:
+    # Only deploy once the build process completed (dependency) on EC2 instance
+    needs: build
+    runs-on: [aws-ec2]
+    # Job's step
+    steps:
+      # Pull the docker container image from docker hub
+      - name: Pull image from docker hub
+        run: docker pull shobhittripathi/dataservice-0.0.1-SNAPSHOT:latest
+      # Delete the old container to avoid name redundancy, if exist already (optional/conditional)
+      - name: Delete old container
+        run: docker rm -f springboot-dataservices-container
+      # Initializing the Docker container
+      - name: Run docker container
+        run: docker run -d -p 8080:8080 --name springboot-dataservices-container shobhittripathi/dataservice-0.0.1-SNAPSHOT
