@@ -42,7 +42,7 @@ jobs:
       # Build docker image from the existing project (using maven)
       - name: Build Docker Image
         run: docker build -t shobhittripathi/dataservice-0.0.1-snapshot:latest .
-      # Publish the build image to our docker hub repository
+      # Publish the built image to Docker Hub repository
       - name: Publish image to docker hub
         run: docker push shobhittripathi/dataservice-0.0.1-snapshot:latest
 
