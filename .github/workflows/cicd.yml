@@ -1,4 +1,4 @@
-# This CI/CD pipeline automatically builds and pushes a Docker image to Docker Hub
+# This CI/CD pipeline (version 0.1) automatically builds and pushes a Docker image to Docker Hub
 # whenever code is pushed to the deploy branch.
 # It then deploys the built Docker image to an AWS EC2 instance using a self-hosted runner on Linux machine(Ubuntu latest).
 
@@ -33,8 +33,8 @@ jobs:
         run: mvn clean install -DskipTests
 
       # Debugging step to print Docker Username
-      - name: Print Docker Username
-        run: echo "Docker Username:+ ${{ secrets.DOCKER_USERNAME }}"
+      # - name: Print Docker Username
+      #  run: echo "Docker Username:+ ${{ secrets.DOCKER_USERNAME }}"
 
       # Login to Docker hub and using the GitHub Secrets, which provides a secure way to manage our credentials without exposing them
       - name: Login to Docker hub
